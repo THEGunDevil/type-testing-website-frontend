@@ -99,8 +99,6 @@ function TextField() {
       : 0;
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-
       setTimer(30);
       setTimeUp(false);
       setTypedLetterArr([]);
