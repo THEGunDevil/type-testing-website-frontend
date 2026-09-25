@@ -97,15 +97,25 @@ function TextField() {
     typedLetterArr.length > 0
       ? Math.round((correctCharacterCount / typedLetterArr.length) * 100)
       : 0;
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-      setTimer(30);
-      setTimeUp(false);
-      setTypedLetterArr([]);
-      setIsStarted(false);
-      setHoveredTimer(null);
-    }
-  };
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+  
+        setTimer(30);
+        setTimeUp(false);
+        setTypedLetterArr([]);
+        setIsStarted(false);
+        setHoveredTimer(null);
+      }
+    };
+  
+    window.addEventListener("keydown", handleKeyDown);
+  
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
   const handleRestart = () => {
     setTimer(30);
     setTimeUp(false);
@@ -175,7 +185,6 @@ function TextField() {
             </span>
           </div>
           <button
-            onKeyDown={handleKeyDown}
             onClick={handleRestart}
             className="hover:text-amber-700 transition-colors cursor-pointer duration-200"
           >
