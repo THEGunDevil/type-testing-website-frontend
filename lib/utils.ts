@@ -1,3 +1,4 @@
+
 export const loopString = (str: string): string[] => {
   const stringArr: string[] = [];
   for (const s of str) {
@@ -16,4 +17,24 @@ export const matchThroughArrayOfTypedStrings = (
 
   // Shudhu matro target array-er oi specific index-er letter-er sathe current type kora letter check hocche
   return arrOfStr[i] === v;
+};
+export const proccessedTextData = (text: string): string[] => {
+  const cleanText = text
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const words = cleanText.split(" ");
+  const practiceTexts: string[] = [];
+
+  for (let i = 0; i < words.length; i += 30) {
+    const practiceText = words
+      .slice(i, i + 30)
+      .join(" ");
+
+    practiceTexts.push(practiceText);
+  }
+
+  return practiceTexts;
 };

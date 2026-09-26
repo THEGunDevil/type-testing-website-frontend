@@ -1,14 +1,25 @@
 "use client";
 
-import { loopString, matchThroughArrayOfTypedStrings } from "@/lib/utils";
+import {
+  loopString,
+  matchThroughArrayOfTypedStrings,
+  proccessedTextData,
+} from "@/lib/utils";
 import { Clock, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import Result from "./Result";
+import { useTextData } from "@/hooks/useTextData";
 
 function TextField() {
+  const { text, fetchTextOffline } = useTextData();
   const typedTextRef = useRef<HTMLTextAreaElement>(null);
-  const practiceText =
-    "Memories warm you up from the inside. But they also tear you apart.";
+  useEffect(() => {
+    fetchTextOffline();
+  }, []);
+  const initialText =proccessedTextData(text?.data.toString()).join("");
+  const [newPracticeText, setNewPracticeText] = useState<string>(initialText);
+  const practiceText = newPracticeText || initialText;
+  // console.log(initialText)
   const practiceTextLetters = loopString(practiceText);
   const [typedLetterArr, setTypedLetterArr] = useState<string[]>([]);
   const typedLetterArrToParagraph: string = typedLetterArr.join("");
@@ -17,7 +28,13 @@ function TextField() {
   const [timer, setTimer] = useState<number>(30);
   const [selectedTimer, setSelectedTimer] = useState<number | null>(null);
   const [isStarted, setIsStarted] = useState(false);
-  // const isCompleted = typedLetterArr.length >= practiceTextLetters.length;
+  const isCompleted = typedLetterArr.length >= practiceTextLetters.length;
+  if (isCompleted) {
+    for (let i = 0; i < text.data.length; i++) {
+      setNewPracticeText(proccessedTextData(text.data[i].toString()).join(""));
+    }
+  }
+
   const [timeUp, setTimeUp] = useState<boolean>(timer === 0);
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -101,7 +118,7 @@ function TextField() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
-  
+
         setTimer(30);
         setTimeUp(false);
         setTypedLetterArr([]);
@@ -109,9 +126,9 @@ function TextField() {
         setHoveredTimer(null);
       }
     };
-  
+
     window.addEventListener("keydown", handleKeyDown);
-  
+
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
@@ -123,6 +140,8 @@ function TextField() {
     setIsStarted(false);
     setHoveredTimer(null);
   };
+
+  // console.log(practiceText);
   return (
     <section className="pt-10 font-jetbrains min-h-screen flex flex-col justify-center items-center">
       <h1 className="text-amber-700 text-5xl text-center -mt-24">
@@ -159,9 +178,9 @@ function TextField() {
           ))}
         </div>
       </div>
-      <div className="relative mt-16 h-36 w-xs md:w-lg lg:w-2xl font-jetbrains text-lg font-semibold tracking-widest rounded-2xl border-2 border-amber-700 p-3 leading-relaxed">
+      <div className="relative mt-16 h-56 w-xs md:w-xl lg:w-2xl font-jetbrains text-lg font-semibold tracking-widest leading-relaxed">
         <div className="absolute -top-10 left-0 w-full flex items-center justify-between font-mono text-xl text-white">
-          <div className="relative h-7 w-56 overflow-hidden">
+          <div className="relative h-7  w-full overflow-hidden">
             {/* Time */}
             <span
               className={`absolute inset-0 whitespace-nowrap transition-all duration-300 ease-in-out ${
@@ -192,7 +211,7 @@ function TextField() {
           </button>
         </div>
 
-        <div className="absolute inset-0 p-3 text-gray-600 pointer-events-none break-all whitespace-pre-wrap select-none">
+        <div className="absolute overflow-hidden inset-0 text-gray-600 pointer-events-none break-all whitespace-pre-wrap select-none">
           {practiceText}
         </div>
         {/* Typed Character Display Layer */}
