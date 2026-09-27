@@ -1,5 +1,4 @@
-import React from "react";
-
+"use client"
 type ResultProps = {
   countCorrectWords: number;
   accuracy: number;

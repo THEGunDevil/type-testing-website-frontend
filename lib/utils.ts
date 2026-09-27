@@ -20,6 +20,7 @@ export const matchThroughArrayOfTypedStrings = (
 };
 export const proccessedTextData = (text: string): string[] => {
   const cleanText = text
+    .replace(/_/g, "")
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, "'")
     .replace(/\s+/g, " ")
@@ -28,9 +29,9 @@ export const proccessedTextData = (text: string): string[] => {
   const words = cleanText.split(" ");
   const practiceTexts: string[] = [];
 
-  for (let i = 0; i < words.length; i += 30) {
+  for (let i = 0; i < words.length; i += 5) {
     const practiceText = words
-      .slice(i, i + 30)
+      .slice(i, i + 5)
       .join(" ");
 
     practiceTexts.push(practiceText);
