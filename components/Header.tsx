@@ -10,11 +10,7 @@ function Header() {
     {
       title: "Challenge Yourself",
       url: "/",
-    },
-    {
-      title: "Practice",
-      url: "/practice",
-    },
+    }
   ];
   return (
     <header
@@ -41,7 +37,7 @@ function Header() {
                 key={index}
                 href={nav.url}
                 className={`
-                  group flex items-center px-4 py-2
+                  group flex items-center px-4
                   font-medium
                   transition-colors duration-300
                   ${

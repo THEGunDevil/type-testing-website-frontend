@@ -2,7 +2,23 @@
 
 import { BriefcaseBusiness } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import AnimatedBtn from "./ButtonStyleAnimation";
+
 function Footer() {
+  const pathname = usePathname();
+
+  const navigations = [
+    {
+      title: "Challenge Yourself",
+      url: "/",
+    },
+    {
+      url: "https://himel-codes-95.vercel.app/",
+      icon: BriefcaseBusiness,
+    },
+  ];
+
   return (
     <footer className="border-t border-gray-700 bg-gray-900 font-jetbrains text-gray-400">
       <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-5 py-6 md:flex-row">
@@ -14,27 +30,39 @@ function Footer() {
         </div>
 
         {/* Navigation */}
-        <nav className="flex items-center gap-5 text-sm">
-          <Link href="/" className="transition-colors hover:text-amber-500">
-            Challenge
-          </Link>
-
-          <Link
-            href="/practice"
-            className="transition-colors hover:text-amber-500"
-          >
-            Practice
-          </Link>
-
-          <Link
-            href="https://himel-codes-95.vercel.app/"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="portfolio"
-            className="transition-colors hover:text-amber-500"
-          >
-            <BriefcaseBusiness size={18} />
-          </Link>
+        <nav>
+          <ul className="flex space-x-3">
+            {navigations.map((nav, index) => {
+              const isActive = pathname === nav.url;
+              const Icon = nav.icon;
+              return (
+                <Link
+                  key={index}
+                  href={nav.url}
+                  className={`
+                    group flex items-center
+                    transition-colors duration-300
+                    ${
+                      isActive
+                        ? "text-amber-400"
+                        : "text-gray-800 hover:text-amber-500"
+                    }
+                  `}
+                >
+                  <AnimatedBtn
+                    isActive={isActive}
+                    LPunctuation="{"
+                    RPunctuation="}"
+                  >
+                    <span className="mx-2 flex items-center gap-1">
+                      {" "}
+                      {Icon && <Icon size={16} />} {nav.title}{" "}
+                    </span>
+                  </AnimatedBtn>
+                </Link>
+              );
+            })}
+          </ul>
         </nav>
 
         {/* Copyright */}

@@ -6,6 +6,7 @@ import Result from "@/components/Result";
 import TextField from "@/components/TextField";
 import Timer from "@/components/Timer";
 import { useTextData } from "@/hooks/useTextData";
+import { ToggleMode, useToggleMode } from "@/hooks/useToggleMode";
 import { loopString, proccessedTextData } from "@/lib/utils";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -173,12 +174,17 @@ export default function Home() {
   }, [handleRestart]);
 
   const displayedTimer = hoveredTimer ?? timer;
-
+  const ToggleModes = ["Challenge", "Practice"];
+  const { handleToggle, activeIndex, modeType } = useToggleMode(ToggleModes);
   return (
     <main className="min-h-screen bg-gray-800 px-5 md:px-10">
       <section className="relative flex min-h-screen flex-col items-center justify-center py-14 font-jetbrains">
+        <ToggleMode
+          ToggleModes={ToggleModes}
+          activeIndex={activeIndex}
+          onToggle={handleToggle}
+        />{" "}
         <h1 className="text-center text-5xl text-amber-700">Start Typing!</h1>
-
         <ChallengeOptions
           challengeOptions={CHALLENGE_OPTIONS}
           handleChangeTimeOnClick={handleChangeTimeOnClick}
@@ -186,7 +192,6 @@ export default function Home() {
           setHoveredTimer={setHoveredTimer}
           timer={timer}
         />
-
         {/* Height now comes from the 3-line TextField, so no fixed h-96 */}
         <div className="relative mt-16 w-full max-w-5xl">
           <Timer
@@ -207,7 +212,6 @@ export default function Home() {
             onComplete={handleCompleteText}
           />
         </div>
-
         <div className="relative mt-10 h-44">
           {timeUp && (
             <Result
@@ -220,7 +224,6 @@ export default function Home() {
             />
           )}
         </div>
-
         <div className="mt-14 text-xs">
           <KeyboardShortcuts />
         </div>
