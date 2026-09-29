@@ -29,9 +29,9 @@ export const proccessedTextData = (text: string): string[] => {
   const words = cleanText.split(" ");
   const practiceTexts: string[] = [];
 
-  for (let i = 0; i < words.length; i += 5) {
+  for (let i = 0; i < words.length; i += 300) {
     const practiceText = words
-      .slice(i, i + 5)
+      .slice(i, i + 300)
       .join(" ");
 
     practiceTexts.push(practiceText);

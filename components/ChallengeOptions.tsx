@@ -15,7 +15,7 @@ function ChallengeOptions({
   handleChangeTimeOnHover,
 }:ChallengeOptionProps) {
   return (
-    <div className="mt-16 flex flex-col items-center justify-center gap-5 md:flex-row md:gap-5">
+    <div className="mt-8 flex flex-col items-center justify-center gap-5 md:flex-row md:gap-5">
       <p className="flex items-center gap-2 text-amber-600">
         <Clock size={20} />
         <span>Pick Your Challenge</span>

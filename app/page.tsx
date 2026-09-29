@@ -7,7 +7,15 @@ import TextField from "@/components/TextField";
 import Timer from "@/components/Timer";
 import { useTextData } from "@/hooks/useTextData";
 import { loopString, proccessedTextData } from "@/lib/utils";
-import { useEffect, useState, useMemo, useRef } from "react"; // useRef যুক্ত করা হয়েছে
+import { useCallback, useEffect, useMemo, useState } from "react";
+
+type CompletedChunk = {
+  letters: string[]; // the practice text that was shown
+  typed: string[]; // what the user typed for it
+};
+
+const CHALLENGE_OPTIONS = [5, 30, 60];
+const DEFAULT_TIMER = 30;
 
 export default function Home() {
   const { text, fetchTextOffline } = useTextData();
@@ -16,159 +24,171 @@ export default function Home() {
     fetchTextOffline();
   }, []);
 
-  const processedTexts = useMemo(
+  /* ---------------- Text ---------------- */
+
+  const processedTexts: string[] = useMemo(
     () => proccessedTextData(text?.data ?? ""),
     [text],
   );
-  const [currentTextIndex, setCurrentTextIndex] = useState<number>(0);
-  const practiceText = processedTexts[currentTextIndex] ?? "";
-  const practiceTextLetters = useMemo(
-    () => loopString(practiceText),
-    [practiceText],
+
+  const [currentTextIndex, setCurrentTextIndex] = useState(0);
+
+  // Wraps around, so a long test never runs out of text
+  const currentPracticeText: string =
+    processedTexts.length > 0
+      ? processedTexts[currentTextIndex % processedTexts.length]
+      : "";
+
+  const currentPracticeTextLetters = useMemo(
+    () => loopString(currentPracticeText),
+    [currentPracticeText],
   );
 
+  /* ---------------- Typing state ---------------- */
+
+  // What is being typed right now (current text only)
   const [typedLetterArr, setTypedLetterArr] = useState<string[]>([]);
 
-  // লেটেস্ট টাইপ করা ডেটা ট্র্যাক করার জন্য useRef ব্যবহার করা হলো
-  const typedLetterArrRef = useRef<string[]>([]);
-  useEffect(() => {
-    typedLetterArrRef.current = typedLetterArr;
-  }, [typedLetterArr]);
+  // Fully completed texts. Single source of truth for the results.
+  const [history, setHistory] = useState<CompletedChunk[]>([]);
 
-  const [timer, setTimer] = useState<number>(30);
-  const timerRef = useRef(timer);
-  useEffect(() => {
-    timerRef.current = timer;
-  }, [timer]);
-  const [selectedTimer, setSelectedTimer] = useState<number | null>(null);
-  const [isStarted, setIsStarted] = useState(false);
-  const [timeUp, setTimeUp] = useState<boolean>(false);
+  /* ---------------- Timer state ---------------- */
+
+  const [timer, setTimer] = useState(DEFAULT_TIMER);
+  const [selectedTimer, setSelectedTimer] = useState(DEFAULT_TIMER);
   const [hoveredTimer, setHoveredTimer] = useState<number | null>(null);
+  const [isStarted, setIsStarted] = useState(false);
+  const [timeUp, setTimeUp] = useState(false);
 
-  const typedLetterArrToParagraph: string = typedLetterArr.join("");
-  const typedWords = typedLetterArrToParagraph.split(" ");
-  const [totalOfTypedLetters, setTotalOfTypedLetters] = useState<string[][]>(
-    [],
-  );
+  // Deadline based countdown: no drift, no stale refs, no setState in the effect body
   useEffect(() => {
-    if (!isStarted) return; // গেম শুরু না হলে কিছুই হবে না
+    if (!isStarted) return;
 
-    const interval = setInterval(() => {
-      // timerRef.current ব্যবহার করে আমরা চেক করছি সময় ১ বা তার কম হলো কি না
-      if (timerRef.current <= 1) {
-        clearInterval(interval);
-        setTimer(0);
-        setTimeUp(true);
+    const endAt = Date.now() + selectedTimer * 1000;
+
+    const id = setInterval(() => {
+      const remaining = Math.max(0, Math.ceil((endAt - Date.now()) / 1000));
+      setTimer(remaining);
+
+      if (remaining === 0) {
+        clearInterval(id);
         setIsStarted(false);
-        setTotalOfTypedLetters((prevArr) => [
-          ...prevArr,
-          typedLetterArrRef.current,
-        ]);
-      } else {
-        setTimer((prev) => prev - 1);
+        setTimeUp(true);
       }
-    }, 1000);
+    }, 250);
 
-    return () => clearInterval(interval); // Cleanup function
-  }, [isStarted]); // এখানে শুধু isStarted থাকবে
+    return () => clearInterval(id);
+  }, [isStarted, selectedTimer]);
 
-  let countCorrectWords: number = 0;
+  /* ---------------- Results ---------------- */
 
-  for (const w of typedWords) {
-    if (w && practiceText.includes(w)) {
-      countCorrectWords++;
+  const stats = useMemo(() => {
+    const empty = { correct: 0, incorrect: 0, correctWords: 0 };
+    if (!timeUp) return empty;
+
+    // Finished texts + the text that was still in progress when time ran out
+    const chunks: CompletedChunk[] = [
+      ...history,
+      { letters: currentPracticeTextLetters, typed: typedLetterArr },
+    ];
+
+    let correct = 0;
+    let incorrect = 0; // wrong letters + letters skipped with space
+    let correctWords = 0;
+
+    for (const { letters, typed } of chunks) {
+      // Characters
+      for (let i = 0; i < typed.length; i++) {
+        if (typed[i] === letters[i]) correct++;
+        else incorrect++; // wrong letter or SKIPPED
+      }
+
+      // Words: a word counts only if every letter of it was typed correctly
+      let start = 0;
+      while (start < letters.length) {
+        let end = start;
+        while (end < letters.length && letters[end] !== " ") end++;
+
+        if (end > start && typed.length >= end) {
+          let ok = true;
+          for (let i = start; i < end; i++) {
+            if (typed[i] !== letters[i]) {
+              ok = false;
+              break;
+            }
+          }
+          if (ok) correctWords++;
+        }
+
+        start = end + 1; // jump over the space
+      }
     }
-  }
-  const correctCharacterCount = typedLetterArr.reduce(
-    (count, letter, index) => {
-      return letter === practiceTextLetters[index] ? count + 1 : count;
-    },
-    0,
-  );
 
-  const incorrectCharacterCount = typedLetterArr.length - correctCharacterCount;
+    return { correct, incorrect, correctWords };
+  }, [timeUp, history, currentPracticeTextLetters, typedLetterArr]);
+
+  const totalTyped = stats.correct + stats.incorrect;
   const accuracy =
-    typedLetterArr.length > 0
-      ? Math.round((correctCharacterCount / typedLetterArr.length) * 100)
-      : 0;
+    totalTyped > 0 ? Math.round((stats.correct / totalTyped) * 100) : 0;
 
-  // Handlers
-  const challengeOptions = [30, 60];
+  /* ---------------- Handlers ---------------- */
+
+  const resetTest = useCallback((duration: number) => {
+    setTimer(duration);
+    setSelectedTimer(duration);
+    setTimeUp(false);
+    setIsStarted(false);
+    setHoveredTimer(null);
+    setTypedLetterArr([]);
+    setHistory([]);
+    setCurrentTextIndex(0);
+  }, []);
 
   const handleChangeTimeOnHover = (o: number) => setHoveredTimer(o);
-
-  const handleChangeTimeOnClick = (o: number) => {
-    setTimer(o);
-    setSelectedTimer(o);
-    setTypedLetterArr([]);
-    setIsStarted(false);
-    setHoveredTimer(null);
-    setTotalOfTypedLetters([]); // সময় পরিবর্তন করলে হিস্ট্রি ক্লিয়ার হওয়া উচিত
-  };
-
-  const handleRestart = () => {
-    setTimer(selectedTimer ?? 30);
-    setTimeUp(false);
-    setTypedLetterArr([]);
-    setIsStarted(false);
-    setHoveredTimer(null);
-    setTotalOfTypedLetters([]); // রিস্টার্ট করলেও হিস্ট্রি ক্লিয়ার করে দেওয়া হলো
-    setCurrentTextIndex(0); // রিস্টার্টে প্রথম টেক্সটে নিয়ে আসার জন্য (প্রয়োজন হলে)
-  };
-
-  // Home.tsx এর ভেতরে:
+  const handleChangeTimeOnClick = (o: number) => resetTest(o);
+  const handleRestart = useCallback(
+    () => resetTest(selectedTimer),
+    [resetTest, selectedTimer],
+  );
 
   const handleCompleteText = (finalTypedArr: string[]) => {
-    // এখানে typedLetterArr এর বদলে finalTypedArr ব্যবহার করুন!
-    setTotalOfTypedLetters((prev) => [...prev, finalTypedArr]);
-
-    const nextIndex = currentTextIndex + 1;
-    if (nextIndex < processedTexts.length) {
-      setCurrentTextIndex(nextIndex);
-      setTypedLetterArr([]);
-    } else {
-      // The whole test is completely finished.
-    }
+    setHistory((prev) => [
+      ...prev,
+      { letters: currentPracticeTextLetters, typed: finalTypedArr },
+    ]);
+    setCurrentTextIndex((prev) => prev + 1);
+    setTypedLetterArr([]);
   };
 
+  // Ctrl/Cmd + Enter restarts
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
         e.preventDefault();
         handleRestart();
       }
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [selectedTimer]);
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [handleRestart]);
 
   const displayedTimer = hoveredTimer ?? timer;
 
-  // useEffect(() => {
-  //   console.log(totalOfTypedLetters);
-  // }, [totalOfTypedLetters]);
-  console.log(practiceTextLetters.length);
-  console.log(typedLetterArr.length);
-  console.log("practiceTextLetters: ", practiceTextLetters);
-  console.log("typedLetterArr: ", typedLetterArr);
   return (
-    <main className="mt-14 xl:px-72 md:px-24 px-5 bg-gray-800">
-      <section className="pt-10 font-jetbrains min-h-screen flex flex-col justify-center items-center">
-        <h1 className="text-amber-700 text-5xl text-center -mt-24">
-          Start Typing!
-        </h1>
+    <main className="min-h-screen bg-gray-800 px-5 md:px-10">
+      <section className="relative flex min-h-screen flex-col items-center justify-center py-14 font-jetbrains">
+        <h1 className="text-center text-5xl text-amber-700">Start Typing!</h1>
 
         <ChallengeOptions
-          challengeOptions={challengeOptions}
+          challengeOptions={CHALLENGE_OPTIONS}
           handleChangeTimeOnClick={handleChangeTimeOnClick}
           handleChangeTimeOnHover={handleChangeTimeOnHover}
           setHoveredTimer={setHoveredTimer}
           timer={timer}
         />
 
-        <div className="relative mt-16 h-56 w-xs md:w-xl lg:w-2xl font-jetbrains text-lg font-semibold tracking-widest leading-relaxed">
+        {/* Height now comes from the 3-line TextField, so no fixed h-96 */}
+        <div className="relative mt-16 w-full max-w-5xl">
           <Timer
             displayedTimer={displayedTimer}
             timer={timer}
@@ -177,8 +197,8 @@ export default function Home() {
           />
 
           <TextField
-            practiceText={practiceText}
-            practiceTextLetters={practiceTextLetters}
+            practiceText={currentPracticeText}
+            practiceTextLetters={currentPracticeTextLetters}
             typedLetterArr={typedLetterArr}
             setTypedLetterArr={setTypedLetterArr}
             isStarted={isStarted}
@@ -188,18 +208,22 @@ export default function Home() {
           />
         </div>
 
-        {timeUp && (
-          <Result
-            countCorrectWords={countCorrectWords}
-            accuracy={accuracy}
-            practiceTextLettersLength={practiceTextLetters.length}
-            selectedTimer={selectedTimer}
-            incorrectCharacterCount={incorrectCharacterCount}
-            correctCharacterCount={correctCharacterCount}
-          />
-        )}
+        <div className="relative mt-10 h-44">
+          {timeUp && (
+            <Result
+              countCorrectWords={stats.correctWords}
+              accuracy={accuracy}
+              practiceTextLettersLength={totalTyped}
+              selectedTimer={selectedTimer}
+              incorrectCharacterCount={stats.incorrect}
+              correctCharacterCount={stats.correct}
+            />
+          )}
+        </div>
 
-        <KeyboardShortcuts />
+        <div className="mt-14 text-xs">
+          <KeyboardShortcuts />
+        </div>
       </section>
     </main>
   );
