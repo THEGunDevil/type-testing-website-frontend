@@ -3,14 +3,21 @@ import Link from "next/link";
 import Logo from "./Logo";
 import { usePathname } from "next/navigation";
 import AnimatedBtn from "./ButtonStyleAnimation";
+import { BriefcaseBusiness, InfoIcon } from "lucide-react";
 
 function Header() {
   const pathname = usePathname();
+  
   const navigations = [
     {
-      title: "Challenge Yourself",
-      url: "/",
-    }
+      title: "About",
+      url: "/about",
+      icon:InfoIcon
+    },
+    {
+      url: "https://himel-codes-95.vercel.app/",
+      icon: BriefcaseBusiness,
+    },
   ];
   return (
     <header
@@ -28,10 +35,10 @@ function Header() {
         {/*<Image src="/icon.svg" alt="TypeType Icon" width={200} height={100} />*/}
       </Link>
       <nav>
-        <ul className="flex space-x-4">
+        <ul className="flex">
           {navigations.map((nav, index) => {
             const isActive = pathname === nav.url;
-
+            const Icon = nav.icon;
             return (
               <Link
                 key={index}
@@ -52,8 +59,8 @@ function Header() {
                   LPunctuation="{"
                   RPunctuation="}"
                 >
-                  <span className="mx-2">
-                    {nav.title}
+                  <span className="mx-2 flex items-center gap-1">
+                    {Icon && <Icon size={16} />} {nav.title}{" "}
                   </span>
                 </AnimatedBtn>
               </Link>

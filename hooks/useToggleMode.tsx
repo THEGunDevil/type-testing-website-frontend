@@ -13,12 +13,12 @@ type ToggleModeProps = {
 // ==========================================
 export function ToggleMode({ ToggleModes = [], activeIndex, onToggle }: ToggleModeProps) {
   // Dimensions for translation math
-  const BUTTON_WIDTH_CLASS = "w-28";
-  const BUTTON_WIDTH_PX = 112; // 28 * 4px
+  const BUTTON_WIDTH_CLASS = "w-20";
+  const BUTTON_WIDTH_PX = 80; // 28 * 4px
   const GAP_PX = 8; // space-x-2 = 8px
 
   return (
-    <div className="border-gray-500 p-1 flex space-x-2 border-2 rounded-sm bg-neutral-900 relative isolate w-fit">
+    <div className="py-1.5 flex space-x-2 relative isolate w-fit">
       {/* The Single Sliding Background Pill */}
       <div
         className={`absolute top-1 bottom-1 ${BUTTON_WIDTH_CLASS} bg-gray-500/40 rounded z-0 transition-transform duration-300 ease-out`}
@@ -36,7 +36,7 @@ export function ToggleMode({ ToggleModes = [], activeIndex, onToggle }: ToggleMo
             key={i}
             type="button"
             onClick={() => onToggle(t, i)}
-            className={`${BUTTON_WIDTH_CLASS} p-2 cursor-pointer select-none font-medium text-center relative z-10 transition-colors duration-300 ${
+            className={`${BUTTON_WIDTH_CLASS} cursor-pointer text-xs select-none font-medium text-center relative z-10 transition-colors duration-300 ${
               isActive ? "text-amber-400" : "text-amber-100/70 hover:text-amber-100"
             }`}
           >

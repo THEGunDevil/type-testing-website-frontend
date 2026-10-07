@@ -4,17 +4,24 @@ import React from "react";
 
 type AnimatedBtnProps = {
   children: React.ReactNode;
-  isActive: boolean;
-  LPunctuation: string;
-  RPunctuation: string;
+  isActive?: boolean;
+  LPunctuation?: string;
+  RPunctuation?: string;
+  animate?: boolean;
 };
 
 function AnimatedBtn({
   children,
-  isActive,
-  LPunctuation,
-  RPunctuation,
+  isActive = false,
+  LPunctuation = "{",
+  RPunctuation = "}",
+  animate = true,
 }: AnimatedBtnProps) {
+  // Normal button হলে শুধু children render করবে
+  if (!animate) {
+    return <>{children}</>;
+  }
+
   const punctuationClass = `
     transition-all duration-300
     ${

@@ -1,5 +1,6 @@
 "use client";
 
+import AnimatedBtn from "@/components/ButtonStyleAnimation";
 import ChallengeOptions from "@/components/ChallengeOptions";
 import KeyboardShortcuts from "@/components/keyboardShortcuts";
 import Result from "@/components/Result";
@@ -24,8 +25,6 @@ export default function Home() {
   useEffect(() => {
     fetchTextOffline();
   }, []);
-
-  /* ---------------- Text ---------------- */
 
   const processedTexts: string[] = useMemo(
     () => proccessedTextData(text?.data ?? ""),
@@ -54,12 +53,20 @@ export default function Home() {
   const [history, setHistory] = useState<CompletedChunk[]>([]);
 
   /* ---------------- Timer state ---------------- */
-
+  const ToggleModes = ["Challenge", "Practice"];
+  // const ToggleSoundModes = ["Sound On", "Sound Off"];
+  const { handleToggle, activeIndex, modeType } = useToggleMode(ToggleModes);
+  // const {
+  //   handleToggle: handleSoundToggle,
+  //   activeIndex: activeSoundModeIndex,
+  //   modeType: soundModeType,
+  // } = useToggleMode(ToggleSoundModes);
   const [timer, setTimer] = useState(DEFAULT_TIMER);
   const [selectedTimer, setSelectedTimer] = useState(DEFAULT_TIMER);
   const [hoveredTimer, setHoveredTimer] = useState<number | null>(null);
   const [isStarted, setIsStarted] = useState(false);
   const [timeUp, setTimeUp] = useState(false);
+  const [endPracticeSession, setEndPracticeSession] = useState(false);
 
   // Deadline based countdown: no drift, no stale refs, no setState in the effect body
   useEffect(() => {
@@ -85,8 +92,7 @@ export default function Home() {
 
   const stats = useMemo(() => {
     const empty = { correct: 0, incorrect: 0, correctWords: 0 };
-    if (!timeUp) return empty;
-
+    if (!timeUp && !endPracticeSession) return empty;
     // Finished texts + the text that was still in progress when time ran out
     const chunks: CompletedChunk[] = [
       ...history,
@@ -126,8 +132,13 @@ export default function Home() {
     }
 
     return { correct, incorrect, correctWords };
-  }, [timeUp, history, currentPracticeTextLetters, typedLetterArr]);
-
+  }, [
+    timeUp,
+    endPracticeSession,
+    history,
+    currentPracticeTextLetters,
+    typedLetterArr,
+  ]);
   const totalTyped = stats.correct + stats.incorrect;
   const accuracy =
     totalTyped > 0 ? Math.round((stats.correct / totalTyped) * 100) : 0;
@@ -138,6 +149,7 @@ export default function Home() {
     setTimer(duration);
     setSelectedTimer(duration);
     setTimeUp(false);
+    setEndPracticeSession(false);
     setIsStarted(false);
     setHoveredTimer(null);
     setTypedLetterArr([]);
@@ -174,35 +186,49 @@ export default function Home() {
   }, [handleRestart]);
 
   const displayedTimer = hoveredTimer ?? timer;
-  const ToggleModes = ["Challenge", "Practice"];
-  const { handleToggle, activeIndex, modeType } = useToggleMode(ToggleModes);
   return (
-    <main className="min-h-screen bg-gray-800 px-5 md:px-10">
-      <section className="relative flex min-h-screen flex-col items-center justify-center py-14 font-jetbrains">
-        <ToggleMode
-          ToggleModes={ToggleModes}
-          activeIndex={activeIndex}
-          onToggle={handleToggle}
-        />{" "}
+    <main className="min-h-screen bg-gray-800 px-5 md:px-24 xl:px-72">
+      <section className="relative min-h-screen flex flex-col items-center justify-center pt-14 font-jetbrains">
+        <div className="w-full flex mb-28 justify-end">
+          <div className="p-1 border-gray-500/30 border-2 rounded-md">
+            <ToggleMode
+              ToggleModes={ToggleModes}
+              activeIndex={activeIndex}
+              onToggle={handleToggle}
+            />
+            {/*<hr className="text-gray-500"/>*/}
+            {/*<ToggleMode
+              ToggleModes={ToggleSoundModes}
+              activeIndex={activeSoundModeIndex}
+              onToggle={handleSoundToggle}
+            />*/}
+          </div>
+        </div>
         <h1 className="text-center text-5xl text-amber-700">Start Typing!</h1>
-        <ChallengeOptions
-          challengeOptions={CHALLENGE_OPTIONS}
-          handleChangeTimeOnClick={handleChangeTimeOnClick}
-          handleChangeTimeOnHover={handleChangeTimeOnHover}
-          setHoveredTimer={setHoveredTimer}
-          timer={timer}
-        />
+        {modeType === "Challenge" && (
+          <ChallengeOptions
+            challengeOptions={CHALLENGE_OPTIONS}
+            handleChangeTimeOnClick={handleChangeTimeOnClick}
+            handleChangeTimeOnHover={handleChangeTimeOnHover}
+            setHoveredTimer={setHoveredTimer}
+            timer={timer}
+          />
+        )}
+
         {/* Height now comes from the 3-line TextField, so no fixed h-96 */}
         <div className="relative mt-16 w-full max-w-5xl">
-          <Timer
-            displayedTimer={displayedTimer}
-            timer={timer}
-            handleRestart={handleRestart}
-            isStarted={isStarted}
-          />
+          {modeType === "Challenge" && (
+            <Timer
+              displayedTimer={displayedTimer}
+              timer={timer}
+              handleRestart={handleRestart}
+              isStarted={isStarted}
+            />
+          )}
 
           <TextField
             practiceText={currentPracticeText}
+            modeType={modeType}
             practiceTextLetters={currentPracticeTextLetters}
             typedLetterArr={typedLetterArr}
             setTypedLetterArr={setTypedLetterArr}
@@ -211,9 +237,22 @@ export default function Home() {
             timeUp={timeUp}
             onComplete={handleCompleteText}
           />
+          {modeType === "Practice" && (
+            <button
+              onClick={() => {
+                setEndPracticeSession(true);
+                setIsStarted(false);
+              }}
+              className="group flex items-center gap-1 rounded-md bg-amber-800 p-2 text-sm font-bold text-gray-800 transition-colors mt-10 cursor-pointer duration-300 hover:text-amber-500"
+            >
+              <AnimatedBtn isActive={false} LPunctuation="{" RPunctuation="}">
+                End Practice
+              </AnimatedBtn>
+            </button>
+          )}
         </div>
         <div className="relative mt-10 h-44">
-          {timeUp && (
+          {(timeUp || endPracticeSession) && (
             <Result
               countCorrectWords={stats.correctWords}
               accuracy={accuracy}
@@ -224,7 +263,7 @@ export default function Home() {
             />
           )}
         </div>
-        <div className="mt-14 text-xs">
+        <div className="text-xs mb-5">
           <KeyboardShortcuts />
         </div>
       </section>

@@ -1,6 +1,6 @@
 "use client";
 
-import { BriefcaseBusiness } from "lucide-react";
+import { BriefcaseBusiness, InfoIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AnimatedBtn from "./ButtonStyleAnimation";
@@ -10,8 +10,9 @@ function Footer() {
 
   const navigations = [
     {
-      title: "Challenge Yourself",
-      url: "/",
+      title: "About",
+      url: "/about",
+      icon:InfoIcon
     },
     {
       url: "https://himel-codes-95.vercel.app/",
@@ -21,7 +22,7 @@ function Footer() {
 
   return (
     <footer className="border-t border-gray-700 bg-gray-900 font-jetbrains text-gray-400">
-      <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 px-5 py-6 md:flex-row">
+      <div className="mx-auto flex px-5 md:px-24 xl:px-72 flex-col items-center justify-between gap-4 px-5 py-6 md:flex-row">
         {/* Brand */}
         <div className="text-sm">
           <span className="font-bold text-amber-700">TypeType</span>

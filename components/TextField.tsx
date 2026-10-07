@@ -22,6 +22,7 @@ const CARET_STYLE: "line" | "block" | "underline" = "line";
 
 type TextFieldProps = {
   practiceText: string;
+  modeType: string;
   practiceTextLetters: string[];
   typedLetterArr: string[];
   setTypedLetterArr: Dispatch<SetStateAction<string[]>>;
@@ -38,6 +39,7 @@ type Word = {
 
 function TextField({
   practiceText,
+  modeType,
   practiceTextLetters,
   typedLetterArr,
   setTypedLetterArr,
@@ -46,7 +48,7 @@ function TextField({
   timeUp,
   onComplete,
 }: TextFieldProps) {
-  const { deleteBack, updateCaret,applyInput } = useTextData();
+  const { deleteBack, updateCaret, applyInput } = useTextData();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const innerRef = useRef<HTMLDivElement>(null);
@@ -79,13 +81,14 @@ function TextField({
 
   // The textarea is always empty, so onChange only ever receives what was just typed.
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (modeType === "Practice") return;
     if (timeUp) return;
 
     const next = applyInput(
       practiceTextLetters,
       typedLetterArr,
       e.target.value,
-      SKIPPED
+      SKIPPED,
     );
     if (next === typedLetterArr) return;
 
@@ -165,7 +168,7 @@ function TextField({
   useLayoutEffect(() => {
     charRefs.current.length = len;
     updateCaret(innerRef, charRefs, len, n, caretRef, CARET_STYLE);
-  }, [updateCaret, practiceText, len,n]);
+  }, [updateCaret, practiceText, len, n]);
 
   // Re-measure when the layout changes (window resize, font finishes loading)
   useEffect(() => {
@@ -179,7 +182,7 @@ function TextField({
     observer.observe(viewport);
     observer.observe(inner);
     return () => observer.disconnect();
-  }, [updateCaret,len,n]);
+  }, [updateCaret, len, n]);
 
   const showFocusOverlay = !isFocused && !timeUp;
 
