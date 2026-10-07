@@ -16,7 +16,8 @@ type CompletedChunk = {
   typed: string[]; // what the user typed for it
 };
 
-const CHALLENGE_OPTIONS = [5, 30, 60];
+// const CHALLENGE_OPTIONS = [5, 30, 60];
+const CHALLENGE_OPTIONS = [30, 60];
 const DEFAULT_TIMER = 30;
 
 export default function Home() {

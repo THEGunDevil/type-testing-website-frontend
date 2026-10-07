@@ -4,6 +4,7 @@ import { BriefcaseBusiness, InfoIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import AnimatedBtn from "./ButtonStyleAnimation";
+import Logo from "./Logo";
 
 function Footer() {
   const pathname = usePathname();
@@ -22,10 +23,10 @@ function Footer() {
 
   return (
     <footer className="border-t border-gray-700 bg-gray-900 font-jetbrains text-gray-400">
-      <div className="mx-auto flex px-5 md:px-24 xl:px-72 flex-col items-center justify-between gap-4 px-5 py-6 md:flex-row">
+      <div className="mx-auto flex md:px-24 xl:px-72 flex-col items-center justify-between gap-4 px-5 py-6 md:flex-row">
         {/* Brand */}
-        <div className="text-sm">
-          <span className="font-bold text-amber-700">TypeType</span>
+        <div className="text-sm flex items-center">
+          <span className="text-amber-700"><Logo/></span>
           <span className="mx-2 text-gray-600">•</span>
           <span>Type. Practice. Improve.</span>
         </div>
