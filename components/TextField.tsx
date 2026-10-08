@@ -247,10 +247,18 @@ function TextField({
           {words.map((word) => {
             const wordEnd = word.start + word.chars.length;
 
-            // Underline words you've moved past that contain a mistake
             const hasError =
               n >= wordEnd &&
-              word.chars.some((c, k) => typedLetterArr[word.start + k] !== c);
+              word.chars.some(
+                (c, k) => typedLetterArr[word.start + k] !== c
+              );
+
+            // Find the first wrong character in this word
+            const firstErrorIndex = hasError
+              ? word.chars.findIndex(
+                  (c, k) => typedLetterArr[word.start + k] !== c
+                )
+              : -1;
 
             return (
               <span key={word.start} className="inline-block whitespace-pre">
@@ -259,9 +267,12 @@ function TextField({
                   const typed = typedLetterArr[index];
 
                   let color = "text-gray-600";
+
                   if (typed !== undefined && typed !== SKIPPED) {
                     color =
-                      typed === character ? "text-gray-200" : "text-red-500";
+                      typed === character
+                        ? "text-gray-200"
+                        : "text-red-500";
                   }
 
                   return (
@@ -270,13 +281,42 @@ function TextField({
                       ref={(el) => {
                         charRefs.current[index] = el;
                       }}
-                      className={`${color} ${
-                        hasError
-                          ? "underline decoration-red-500 decoration-2 underline-offset-4"
-                          : ""
-                      }`}
+                      className={`
+                        ${color}
+                        ${
+                          hasError
+                            ? "underline decoration-red-500 decoration-2 underline-offset-4"
+                            : ""
+                        }
+                        relative inline-block
+                      `}
                     >
                       {character}
+
+                      {/* Show box only on the first error character */}
+                      {k === firstErrorIndex && (
+                        <span
+                          className="
+                            absolute
+                            rightright-1/2
+                            top-full
+                            z-100
+                            mt-2
+                            -translate-x-1/2
+                            whitespace-nowrap
+                            rounded-md
+                            border
+                            border-gray-300
+                            bg-amber-500
+                            px-3
+                            py-1
+                            text-sm
+                            text-gray-900
+                          "
+                        >
+                          hello
+                        </span>
+                      )}
                     </span>
                   );
                 })}

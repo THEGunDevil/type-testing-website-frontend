@@ -22,16 +22,22 @@ const DEFAULT_TIMER = 30;
 
 export default function Home() {
   const { text, fetchTextOffline } = useTextData();
-
+  const ToggleModes = ["Challenge", "Practice"];
+  const PracticeLanguageToggleModes = ["English", "Bangla"];
+  // const ToggleSoundModes = ["Sound On", "Sound Off"];
+  const { handleToggle, activeIndex, modeType } = useToggleMode(ToggleModes);
+  const {
+    handleToggle: handlePracticeLanguageToggle,
+    activeIndex: practiceLanguageIndex,
+    modeType: PracticeLanguageMode,
+  } = useToggleMode(PracticeLanguageToggleModes);
   useEffect(() => {
-    fetchTextOffline();
-  }, []);
-
+    fetchTextOffline(PracticeLanguageMode === "Bangla" ? "bangla" : "english");
+  }, [PracticeLanguageMode]);
   const processedTexts: string[] = useMemo(
     () => proccessedTextData(text?.data ?? ""),
     [text],
   );
-
   const [currentTextIndex, setCurrentTextIndex] = useState(0);
 
   // Wraps around, so a long test never runs out of text
@@ -54,9 +60,7 @@ export default function Home() {
   const [history, setHistory] = useState<CompletedChunk[]>([]);
 
   /* ---------------- Timer state ---------------- */
-  const ToggleModes = ["Challenge", "Practice"];
-  // const ToggleSoundModes = ["Sound On", "Sound Off"];
-  const { handleToggle, activeIndex, modeType } = useToggleMode(ToggleModes);
+
   // const {
   //   handleToggle: handleSoundToggle,
   //   activeIndex: activeSoundModeIndex,
@@ -198,11 +202,11 @@ export default function Home() {
               onToggle={handleToggle}
             />
             {/*<hr className="text-gray-500"/>*/}
-            {/*<ToggleMode
-              ToggleModes={ToggleSoundModes}
-              activeIndex={activeSoundModeIndex}
-              onToggle={handleSoundToggle}
-            />*/}
+            <ToggleMode
+              ToggleModes={PracticeLanguageToggleModes}
+              activeIndex={practiceLanguageIndex}
+              onToggle={handlePracticeLanguageToggle}
+            />
           </div>
         </div>
         <h1 className="text-center text-5xl text-amber-700">Start Typing!</h1>

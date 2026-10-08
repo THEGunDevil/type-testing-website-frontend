@@ -1,3 +1,4 @@
+import strict from "node:assert/strict";
 import { useCallback, useState } from "react";
 
 export const useTextData = () => {
@@ -62,14 +63,23 @@ export const useTextData = () => {
       });
     }
   };
-  const fetchTextOffline = async () => {
+  const fetchTextOffline = async (type: string) => {
     setText((prev) => ({
       ...prev,
       loading: true,
       error: null,
     }));
+
+    let filePath: string;
+
+    if (type === "bangla") {
+      filePath = "/dena_pawna.txt";
+    } else {
+      filePath = "/book.txt";
+    }
     try {
-      const res = await fetch("/book.txt");
+      const res = await fetch(filePath);
+
       const text = await res.text();
       setText({
         data: text,
@@ -169,41 +179,46 @@ export const useTextData = () => {
 
     return typed.slice(0, -1);
   }
-  function applyInput(letters: string[], typed: string[], input: string,SKIPPED:string) {
+  function applyInput(
+    letters: string[],
+    typed: string[],
+    input: string,
+    SKIPPED: string,
+  ) {
     let arr = typed;
-  
+
     for (const ch of input) {
       if (arr.length >= letters.length) break;
       if (ch === "\n" || ch === "\r" || ch === "\t") continue;
-  
+
       const i = arr.length;
       const expected = letters[i];
-  
+
       if (ch === " ") {
         // Normal space at the end of a word
         if (expected === " ") {
           arr = [...arr, " "];
           continue;
         }
-  
+
         // Space at the start of a word is ignored (like Monkeytype)
         const atWordStart = i === 0 || letters[i - 1] === " ";
         if (atWordStart) continue;
-  
+
         // Space in the middle of a word: skip the rest of the word
         const spaceIdx = letters.indexOf(" ", i);
         if (spaceIdx === -1) continue; // last word, nothing to skip to
-  
+
         arr = [...arr, ...new Array<string>(spaceIdx - i).fill(SKIPPED), " "];
         continue;
       }
-  
+
       // A letter where a space is expected is ignored (press space to continue)
       if (expected === " ") continue;
-  
+
       arr = [...arr, ch];
     }
-  
+
     return arr;
   }
   return {
