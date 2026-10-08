@@ -387,23 +387,7 @@ function TextField({
         autoCapitalize="off"
         disabled={timeUp}
         aria-label="Typing input"
-        className="
-          absolute
-          inset-0
-          z-10
-          m-0
-          h-full
-          w-full
-          resize-none
-          overflow-hidden
-          border-0
-          bg-transparent
-          p-0
-          text-transparent
-          caret-transparent
-          outline-none
-          cursor-default
-        "
+        className="absolute inset-0 z-10 m-0 h-full w-full resize-none overflow-hidden border-0 bg-transparent p-0 text-transparent caret-transparent outline-none cursor-default"
       />
     </div>
   );
