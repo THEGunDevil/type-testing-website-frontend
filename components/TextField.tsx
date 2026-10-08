@@ -243,8 +243,46 @@ function TextField({
               `}
             />
           )}
-
           {words.map((word) => {
+            const wordEnd = word.start + word.chars.length;
+
+            // Underline words you've moved past that contain a mistake
+            const hasError =
+              n >= wordEnd &&
+              word.chars.some((c, k) => typedLetterArr[word.start + k] !== c);
+
+            return (
+              <span key={word.start} className="inline-block whitespace-pre">
+                {word.chars.map((character, k) => {
+                  const index = word.start + k;
+                  const typed = typedLetterArr[index];
+
+                  let color = "text-gray-600";
+                  if (typed !== undefined && typed !== SKIPPED) {
+                    color =
+                      typed === character ? "text-gray-200" : "text-red-500";
+                  }
+
+                  return (
+                    <span
+                      key={index}
+                      ref={(el) => {
+                        charRefs.current[index] = el;
+                      }}
+                      className={`${color} ${
+                        hasError
+                          ? "underline decoration-red-500 decoration-2 underline-offset-4"
+                          : ""
+                      }`}
+                    >
+                      {character}
+                    </span>
+                  );
+                })}
+              </span>
+            );
+          })}
+          {/*{words.map((word) => {
             const wordEnd = word.start + word.chars.length;
 
             const hasError =
@@ -293,7 +331,6 @@ function TextField({
                     >
                       {character}
 
-                      {/* Show box only on the first error character */}
                       {k === firstErrorIndex && (
                         <span
                           className="
@@ -323,7 +360,7 @@ function TextField({
                 })}
               </span>
             );
-          })}
+          })}*/}
         </div>
       </div>
 
