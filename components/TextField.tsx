@@ -298,20 +298,21 @@ function TextField({
                         <span
                           className="
                             absolute
-                            rightright-1/2
+                            left-12
                             top-full
                             z-100
                             mt-2
                             -translate-x-1/2
                             whitespace-nowrap
                             rounded-md
-                            border
-                            border-gray-300
-                            bg-amber-500
+                            ring-4
+                            ring-gray-300
+                            ring-inset
+                            bg-gray-800
                             px-3
                             py-1
                             text-sm
-                            text-gray-900
+                            text-gray-300
                           "
                         >
                           hello
