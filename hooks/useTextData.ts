@@ -1,4 +1,3 @@
-import strict from "node:assert/strict";
 import { useCallback, useState } from "react";
 
 export const useTextData = () => {
