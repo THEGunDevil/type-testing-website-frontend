@@ -20,6 +20,14 @@ const SKIPPED = "\u200B";
 /** "line" (thin bar), "block" (as wide as the letter) or "underline" */
 const CARET_STYLE: "line" | "block" | "underline" = "line";
 
+// Single-line CSS so server and client text are identical (no CRLF/LF mismatch)
+const CARET_CSS =
+  "@keyframes tf-caret-pulse{0%,100%{opacity:1}50%{opacity:0}}.tf-caret{animation:tf-caret-pulse 1s ease-in-out infinite}@media (prefers-reduced-motion:reduce){.tf-caret{animation:none}}";
+
+/** Joins class names on one line, so line endings can never cause a hydration mismatch */
+const cx = (...classes: (string | false | null | undefined)[]) =>
+  classes.filter(Boolean).join(" ");
+
 type TextFieldProps = {
   practiceText: string;
   modeType: string;
@@ -81,7 +89,6 @@ function TextField({
 
   // The textarea is always empty, so onChange only ever receives what was just typed.
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (modeType === "Practice") return;
     if (timeUp) return;
 
     const next = applyInput(
@@ -124,20 +131,25 @@ function TextField({
 
   /* ---------- Focus handling ---------- */
 
-  // Focus on mount and whenever a new text appears
+  // Focus on mount, when a new text appears, when the mode changes,
+  // and when a finished session is restarted
   useEffect(() => {
-    textareaRef.current?.focus();
-  }, [practiceText]);
+    if (!timeUp) textareaRef.current?.focus();
+  }, [practiceText, timeUp, modeType]);
 
-  // Any key press refocuses the input when nothing else is focused
+  // Any printable key takes focus back, even if a button was clicked last
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (timeUp || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.key.length !== 1) return;
 
       const active = document.activeElement;
-      if (active === null || active === document.body) {
-        textareaRef.current?.focus();
-      }
+      const isEditable =
+        active instanceof HTMLElement &&
+        (active.isContentEditable ||
+          /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName));
+
+      if (!isEditable) textareaRef.current?.focus();
     };
 
     window.addEventListener("keydown", onKeyDown);
@@ -188,36 +200,15 @@ function TextField({
 
   return (
     <div className="relative w-full">
-      <style>{`
-        @keyframes tf-caret-pulse {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
-        }
-        .tf-caret { animation: tf-caret-pulse 1s ease-in-out infinite; }
-        @media (prefers-reduced-motion: reduce) {
-          .tf-caret { animation: none; }
-        }
-      `}</style>
+      <style>{CARET_CSS}</style>
 
       {/* Visible text: exactly 3 lines tall */}
       <div
         ref={viewportRef}
-        className={`
-          relative
-          isolate
-          h-[4.8em]
-          overflow-hidden
-          font-jetbrains
-          text-lg
-          md:text-3xl
-          font-semibold
-          tracking-widest
-          leading-[1.6]
-          select-none
-          transition-[filter,opacity]
-          duration-200
-          ${showFocusOverlay ? "opacity-50 blur-[6px]" : ""}
-        `}
+        className={cx(
+          "relative isolate h-[4.8em] overflow-hidden font-jetbrains text-lg md:text-3xl font-semibold tracking-widest leading-[1.6] select-none transition-[filter,opacity] duration-200",
+          showFocusOverlay && "opacity-50 blur-[6px]",
+        )}
       >
         <div
           ref={innerRef}
@@ -228,21 +219,14 @@ function TextField({
             <span
               ref={caretRef}
               aria-hidden
-              className={`
-                tf-caret
-                pointer-events-none
-                absolute
-                left-0
-                top-0
-                -z-10
-                transition-transform
-                duration-100
-                ease-out
-                ${CARET_STYLE === "block" ? "bg-amber-700/40" : "bg-amber-700"}
-                ${isFocused ? "" : "invisible"}
-              `}
+              className={cx(
+                "tf-caret pointer-events-none absolute left-0 top-0 -z-10 transition-transform duration-100 ease-out",
+                CARET_STYLE === "block" ? "bg-amber-700/40" : "bg-amber-700",
+                !isFocused && "invisible",
+              )}
             />
           )}
+
           {words.map((word) => {
             const wordEnd = word.start + word.chars.length;
 
@@ -269,11 +253,11 @@ function TextField({
                       ref={(el) => {
                         charRefs.current[index] = el;
                       }}
-                      className={`${color} ${
-                        hasError
-                          ? "underline decoration-red-500 decoration-2 underline-offset-4"
-                          : ""
-                      }`}
+                      className={cx(
+                        color,
+                        hasError &&
+                          "underline decoration-red-500 decoration-2 underline-offset-4",
+                      )}
                     >
                       {character}
                     </span>
@@ -282,85 +266,6 @@ function TextField({
               </span>
             );
           })}
-          {/*{words.map((word) => {
-            const wordEnd = word.start + word.chars.length;
-
-            const hasError =
-              n >= wordEnd &&
-              word.chars.some(
-                (c, k) => typedLetterArr[word.start + k] !== c
-              );
-
-            // Find the first wrong character in this word
-            const firstErrorIndex = hasError
-              ? word.chars.findIndex(
-                  (c, k) => typedLetterArr[word.start + k] !== c
-                )
-              : -1;
-
-            return (
-              <span key={word.start} className="inline-block whitespace-pre">
-                {word.chars.map((character, k) => {
-                  const index = word.start + k;
-                  const typed = typedLetterArr[index];
-
-                  let color = "text-gray-600";
-
-                  if (typed !== undefined && typed !== SKIPPED) {
-                    color =
-                      typed === character
-                        ? "text-gray-200"
-                        : "text-red-500";
-                  }
-
-                  return (
-                    <span
-                      key={index}
-                      ref={(el) => {
-                        charRefs.current[index] = el;
-                      }}
-                      className={`
-                        ${color}
-                        ${
-                          hasError
-                            ? "underline decoration-red-500 decoration-2 underline-offset-4"
-                            : ""
-                        }
-                        relative inline-block
-                      `}
-                    >
-                      {character}
-
-                      {k === firstErrorIndex && (
-                        <span
-                          className="
-                            absolute
-                            left-12
-                            top-full
-                            z-100
-                            mt-2
-                            -translate-x-1/2
-                            whitespace-nowrap
-                            rounded-md
-                            ring-4
-                            ring-gray-300
-                            ring-inset
-                            bg-gray-800
-                            px-3
-                            py-1
-                            text-sm
-                            text-gray-300
-                          "
-                        >
-                          hello
-                        </span>
-                      )}
-                    </span>
-                  );
-                })}
-              </span>
-            );
-          })}*/}
         </div>
       </div>
 

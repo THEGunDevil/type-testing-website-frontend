@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -8,39 +9,59 @@ type ToggleModeProps = {
   onToggle: (text: string, index: number) => void;
 };
 
-// ==========================================
-// 1. THE UI COMPONENT (Declared Independently)
-// ==========================================
-export function ToggleMode({ ToggleModes = [], activeIndex, onToggle }: ToggleModeProps) {
-  // Dimensions for translation math
-  const BUTTON_WIDTH_CLASS = "w-20";
-  const BUTTON_WIDTH_PX = 80; // 28 * 4px
-  const GAP_PX = 8; // space-x-2 = 8px
+export function ToggleMode({
+  ToggleModes = [],
+  activeIndex,
+  onToggle,
+}: ToggleModeProps) {
+  if (ToggleModes.length === 0) return null;
 
   return (
-    <div className="py-1.5 flex space-x-2 relative isolate w-fit">
-      {/* The Single Sliding Background Pill */}
+    <div
+      className="
+        relative isolate grid w-fit grid-flow-col
+        auto-cols-[3.75rem] sm:auto-cols-[5rem]
+        rounded-md py-1
+      "
+    >
+      {/* Sliding background */}
       <div
-        className={`absolute top-1 bottom-1 ${BUTTON_WIDTH_CLASS} bg-gray-500/40 rounded z-0 transition-transform duration-300 ease-out`}
+        aria-hidden="true"
+        className="
+          pointer-events-none absolute inset-y-1 left-0
+          rounded bg-gray-500/40
+          transition-transform duration-300 ease-out
+        "
         style={{
-          transform: `translateX(${activeIndex * (BUTTON_WIDTH_PX + GAP_PX)}px)`,
+          width: `${100 / ToggleModes.length}%`,
+          transform: `translateX(${activeIndex * 100}%)`,
         }}
       />
 
-      {/* The Interaction Buttons */}
-      {ToggleModes.map((t, i) => {
-        const isActive = activeIndex === i;
+      {/* Toggle buttons */}
+      {ToggleModes.map((text, index) => {
+        const isActive = activeIndex === index;
 
         return (
           <button
-            key={i}
+            key={text}
             type="button"
-            onClick={() => onToggle(t, i)}
-            className={`${BUTTON_WIDTH_CLASS} cursor-pointer text-xs select-none font-medium text-center relative z-10 transition-colors duration-300 ${
-              isActive ? "text-amber-400" : "text-amber-100/70 hover:text-amber-100"
-            }`}
+            aria-pressed={isActive}
+            onClick={() => onToggle(text, index)}
+            className={`
+              relative z-10 flex w-full min-w-0
+              items-center justify-center
+              whitespace-nowrap px-0 py-1.5 text-[10px] sm:px-1 sm:py-2 sm:text-xs font-medium
+              select-none cursor-pointer
+              transition-colors duration-300
+              ${
+                isActive
+                  ? "text-amber-400"
+                  : "text-amber-100/70 hover:text-amber-100"
+              }
+            `}
           >
-            {t}
+            {text}
           </button>
         );
       })}
@@ -48,17 +69,17 @@ export function ToggleMode({ ToggleModes = [], activeIndex, onToggle }: ToggleMo
   );
 }
 
-// ==========================================
-// 2. THE CUSTOM HOOK (Manages State Only)
-// ==========================================
 export const useToggleMode = (initialModes: string[] = []) => {
   const [mode, setMode] = useState({
-    modeType: initialModes?.[0] || "",
+    modeType: initialModes[0] || "",
     modeIndex: 0,
   });
 
   const handleToggle = (text: string, index: number) => {
-    setMode({ modeType: text, modeIndex: index });
+    setMode({
+      modeType: text,
+      modeIndex: index,
+    });
   };
 
   return {
